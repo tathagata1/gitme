@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self'; script-src 'self'; img-src 'self' data:;" />
+    <title>GitGod</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="ambient ambient-one"></div>
+    <div class="ambient ambient-two"></div>
+    <div class="app-shell">
+      <aside class="sidebar">
+        <div class="brand">
+          <div class="brand-mark" aria-hidden="true"><span></span><span></span><span></span></div>
+          <div><strong>GitGod</strong><small>Visual Git workspace</small></div>
+        </div>
+
+        <button class="repository-picker" id="choose-repository" title="Select a different Git folder">
+          <span class="repo-icon">⌘</span>
+          <span class="repo-picker-copy"><small>ACTIVE REPOSITORY</small><strong id="repo-name">Choose a repository</strong><span id="repo-path">Select any folder inside a Git worktree</span></span>
+          <span class="picker-chevron">⌄</span>
+        </button>
+        <button class="select-folder-button" id="sidebar-select-folder"><span>▣</span> Select Git folder</button>
+
+        <nav class="nav-list" aria-label="Primary navigation">
+          <button class="nav-item active" data-view="workspace"><span>⌂</span>Workspace</button>
+          <button class="nav-item" data-view="history"><span>↺</span>Command history <b id="history-count">0</b></button>
+          <button class="nav-item" data-view="raw"><span>›_</span>Raw command</button>
+        </nav>
+
+        <div class="sidebar-actions">
+          <p>QUICK ACTIONS</p>
+          <button data-action="changes.commit">＋ <span>Commit staged</span></button>
+          <button data-action="branch.create">⑂ <span>New branch</span></button>
+          <button data-action="remote.fetch">⇣ <span>Fetch remote</span></button>
+          <button data-action="remote.pull">↓ <span>Pull changes</span></button>
+          <button data-action="remote.push">↑ <span>Push commits</span></button>
+        </div>
+        <div class="sidebar-footer"><span class="status-dot"></span><div><strong>Local & private</strong><small>Commands run only on this device</small></div></div>
+      </aside>
+
+      <main class="main-content">
+        <header class="topbar">
+          <div>
+            <p class="eyebrow" id="page-eyebrow">REPOSITORY OVERVIEW</p>
+            <h1 id="page-title">Workspace</h1>
+          </div>
+          <div class="topbar-actions">
+            <div class="branch-chip" id="branch-chip"><span>⑂</span><strong>No branch</strong></div>
+            <button class="icon-button" id="refresh" aria-label="Refresh repository" title="Refresh repository">↻</button>
+            <button class="primary-button" id="header-repository-button"><span>▣</span> Select folder</button>
+          </div>
+        </header>
+
+        <section class="view active" id="workspace-view">
+          <div class="empty-state" id="empty-state">
+            <div class="empty-art"><div class="orbit orbit-a"></div><div class="orbit orbit-b"></div><div class="git-symbol">⑂</div></div>
+            <p class="eyebrow">YOUR LOCAL REPOSITORIES</p>
+            <h2>Git, with the lights on.</h2>
+            <p>Select any folder containing a <code>.git</code> worktree. GitGod turns its branches, changes, and history into a calm visual workspace while showing every command before it runs.</p>
+            <div class="empty-actions"><button class="primary-button large" id="empty-open">Select Git folder</button><button class="secondary-button large" id="initialize-repository">Initialize a folder</button></div>
+            <div class="trust-row"><span>✓ No cloud account</span><span>✓ No shell execution</span><span>✓ Explicit command previews</span></div>
+          </div>
+
+          <div class="dashboard hidden" id="dashboard">
+            <section class="hero-card">
+              <div><div class="hero-kicker"><span class="live-dot"></span> WORKTREE READY</div><h2 id="hero-title">Repository</h2><p id="hero-path"></p></div>
+              <div class="hero-stats"><div><strong id="stat-changes">0</strong><span>Changes</span></div><div><strong id="stat-staged">0</strong><span>Staged</span></div><div><strong id="stat-commits">0</strong><span>Recent commits</span></div></div>
+            </section>
+
+            <div class="workspace-grid">
+              <section class="panel changes-panel">
+                <div class="panel-header"><div><p class="eyebrow">WORKING TREE</p><h3>Changes <span class="count" id="changes-count">0</span></h3></div><button class="text-button" id="select-all-changes">Select all</button></div>
+                <div class="file-list" id="changes-list"></div>
+                <div class="panel-footer"><span id="changes-selected">0 selected</span><button class="compact-button" data-action="changes.stage">Stage selected <span>→</span></button></div>
+              </section>
+
+              <section class="panel staged-panel">
+                <div class="panel-header"><div><p class="eyebrow">NEXT COMMIT</p><h3>Staged <span class="count green" id="staged-count">0</span></h3></div><button class="text-button" id="select-all-staged">Select all</button></div>
+                <div class="file-list" id="staged-list"></div>
+                <div class="panel-footer"><button class="text-button" data-action="changes.unstage">Unstage</button><button class="compact-button accent" data-action="changes.commit">Commit staged <span>→</span></button></div>
+              </section>
+
+              <section class="panel branches-panel">
+                <div class="panel-header"><div><p class="eyebrow">BRANCHES</p><h3>Local branches <span class="count" id="branches-count">0</span></h3></div><button class="round-button" data-action="branch.create" title="Create branch">＋</button></div>
+                <div class="branch-list" id="branch-list"></div>
+              </section>
+
+              <section class="panel activity-panel">
+                <div class="panel-header"><div><p class="eyebrow">ACTIVITY</p><h3>Recent commits</h3></div><span class="remote-badge" id="remote-badge">Local only</span></div>
+                <div class="commit-list" id="commit-list"></div>
+              </section>
+            </div>
+          </div>
+        </section>
+
+        <section class="view" id="history-view">
+          <div class="section-intro"><h2>Command history</h2><p>An inspect-only record for this session. Selecting an item never runs it again.</p></div>
+          <div class="history-layout"><div class="panel history-list" id="history-list"></div><div class="panel history-detail" id="history-detail"><div class="blank-slate">Select a command to inspect its exact output.</div></div></div>
+        </section>
+
+        <section class="view" id="raw-view">
+          <div class="section-intro"><p class="eyebrow">ADVANCED MODE</p><h2>Run a raw Git command</h2><p>The command is split into arguments and passed directly to Git—never to a shell. You still preview and explicitly execute it.</p></div>
+          <div class="panel raw-card"><label for="raw-input">Command</label><div class="raw-input-row"><span>$</span><input id="raw-input" autocomplete="off" spellcheck="false" placeholder="git log --oneline --graph --all" /><button class="primary-button" id="preview-raw">Create preview</button></div><div class="warning-note"><strong>Safety note</strong><span>Destructive patterns such as <code>reset --hard</code>, forced pushes, and <code>clean -f</code> receive an extra confirmation.</span></div></div>
+        </section>
+      </main>
+    </div>
+
+    <section class="command-dock" id="command-dock" aria-live="polite">
+      <div class="dock-grip"></div>
+      <div class="dock-header"><div><span class="risk-badge" id="risk-badge">NORMAL</span><strong id="preview-summary">Command preview</strong></div><button class="dock-close" id="clear-preview" aria-label="Clear preview">×</button></div>
+      <div class="command-line"><span>$</span><code id="preview-command"></code><button id="copy-command" title="Copy command">Copy</button></div>
+      <p id="preview-explanation"></p>
+      <div class="dock-actions"><span>Review the exact command before it touches your repository.</span><button class="primary-button execute-button" id="execute-command">Execute command <span>↵</span></button></div>
+    </section>
+
+    <div class="modal-backdrop" id="modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+      <div class="modal"><div class="modal-icon" id="modal-icon">⑂</div><h2 id="modal-title"></h2><p id="modal-message"></p><label class="modal-field hidden" id="modal-field-wrap"><span id="modal-field-label"></span><input id="modal-field" /></label><pre class="modal-command hidden" id="modal-command"></pre><div class="modal-buttons"><button class="secondary-button" id="modal-cancel">Cancel</button><button class="primary-button" id="modal-confirm">Continue</button></div></div>
+    </div>
+    <div class="toast-stack" id="toast-stack"></div>
+
+    <script src="commands.js"></script>
+    <script src="app.js"></script>
+  </body>
+</html>

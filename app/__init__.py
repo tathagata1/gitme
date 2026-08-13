@@ -1,0 +1,2 @@
+"""Git Visual application package."""
+

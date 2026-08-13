@@ -1,0 +1,16 @@
+{
+  "name": "gitgod",
+  "version": "1.0.0",
+  "description": "A visual, offline Git desktop client that teaches the command line as you work.",
+  "main": "electron/main.cjs",
+  "type": "commonjs",
+  "scripts": {
+    "start": "electron .",
+    "dev": "electron .",
+    "test": "node --test electron/*.test.cjs",
+    "test:python": "python -m pytest"
+  },
+  "devDependencies": {
+    "electron": "^43.4.0"
+  }
+}
