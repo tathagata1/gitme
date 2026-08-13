@@ -56,6 +56,9 @@ async function findRoot(selectedPath) {
 function parseStatus(output) {
   let currentBranch = "HEAD";
   let detachedHead = false;
+  let upstream = null;
+  let ahead = 0;
+  let behind = 0;
   const files = [];
   const records = output.split("\0");
 
@@ -66,6 +69,18 @@ function parseStatus(output) {
       const head = record.slice(14).trim();
       detachedHead = head === "(detached)";
       currentBranch = detachedHead ? "Detached HEAD" : head;
+      continue;
+    }
+    if (record.startsWith("# branch.upstream ")) {
+      upstream = record.slice(18).trim() || null;
+      continue;
+    }
+    if (record.startsWith("# branch.ab ")) {
+      const match = record.match(/^# branch\.ab \+(\d+) -(\d+)$/);
+      if (match) {
+        ahead = Number(match[1]);
+        behind = Number(match[2]);
+      }
       continue;
     }
     if (record.startsWith("1 ")) {
@@ -94,7 +109,7 @@ function parseStatus(output) {
     }
   }
 
-  return { currentBranch, detachedHead, files };
+  return { currentBranch, detachedHead, upstream, ahead, behind, files };
 }
 
 function parseLog(output) {
@@ -121,14 +136,22 @@ async function loadState(repositoryRoot) {
   const parsed = parseStatus(status.stdout);
   const remoteNames = remotesResult.success ? remotesResult.stdout.split(/\r?\n/).map((item) => item.trim()).filter(Boolean) : [];
   const remotes = await Promise.all(remoteNames.map(async (name) => {
-    const [fetch, push] = await Promise.all([
+    const [fetch, push, branches] = await Promise.all([
       runGit(["remote", "get-url", "--all", name], root),
       runGit(["remote", "get-url", "--push", "--all", name], root),
+      runGit(["for-each-ref", "--format=%(refname)", `refs/remotes/${name}`], root),
     ]);
     return {
       name,
       fetchUrls: fetch.success ? fetch.stdout.split(/\r?\n/).filter(Boolean) : [],
       pushUrls: push.success ? push.stdout.split(/\r?\n/).filter(Boolean) : [],
+      branches: branches.success
+        ? branches.stdout
+          .split(/\r?\n/)
+          .map((item) => item.trim())
+          .filter((item) => item.startsWith(`refs/remotes/${name}/`) && item !== `refs/remotes/${name}/HEAD`)
+          .map((item) => `${name}/${item.slice(`refs/remotes/${name}/`.length)}`)
+        : [],
     };
   }));
 

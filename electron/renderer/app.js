@@ -1,4 +1,4 @@
-const { RISK, make, paths, raw } = window.GitCommands;
+const { RISK, make, paths, raw, syncRemote } = window.GitCommands;
 
 const appState = {
   root: null,
@@ -153,11 +153,13 @@ function renderRepository() {
   $("#changes-count").textContent = changed.length;
   $("#staged-count").textContent = staged.length;
   $("#branches-count").textContent = repository.branches.length;
+  $("#remotes-count").textContent = repository.remotes.length;
   $("#remote-badge").textContent = repository.remotes.length ? `${repository.remotes.length} remote${repository.remotes.length === 1 ? "" : "s"}` : "Local only";
   renderFiles("changes", changed, appState.selectedChanges);
   renderFiles("staged", staged, appState.selectedStaged);
   renderBranches();
   renderCommits();
+  renderRemotes();
   updateSelectionLabels();
 }
 
@@ -198,6 +200,32 @@ function renderCommits() {
   container.innerHTML = commits.map((commit) => `<div class="commit-row"><span class="commit-node"></span><span class="commit-copy"><strong>${escapeHtml(commit.subject)}</strong><small>${escapeHtml(commit.author)} · ${escapeHtml(commit.relativeDate)}${commit.decorations ? ` · ${escapeHtml(commit.decorations)}` : ""}</small></span><code class="commit-hash">${escapeHtml(commit.hash)}</code></div>`).join("");
 }
 
+function renderRemotes() {
+  const repository = appState.repository;
+  const container = $("#remote-list");
+  if (!repository.remotes.length) {
+    container.innerHTML = '<div class="list-empty"><div><strong>No remotes configured</strong>Add a hosted repository URL to publish or sync this branch.</div></div>';
+    return;
+  }
+  container.innerHTML = repository.remotes.map((remote) => {
+    const tracksCurrentBranch = repository.upstream === `${remote.name}/${repository.currentBranch}`;
+    const relation = tracksCurrentBranch
+      ? `${repository.upstream} · ↑ ${repository.ahead} ahead · ↓ ${repository.behind} behind`
+      : `${remote.branches.length} remote branch${remote.branches.length === 1 ? "" : "es"}`;
+    const fetchUrl = remote.fetchUrls[0] || "No fetch URL";
+    const pushUrl = remote.pushUrls[0] || fetchUrl;
+    return `<div class="remote-row">
+      <div class="remote-identity"><strong>${escapeHtml(remote.name)}</strong><span class="remote-tracking">${escapeHtml(relation)}</span></div>
+      <div class="remote-url"><strong title="${escapeHtml(fetchUrl)}">${escapeHtml(fetchUrl)}</strong><small>${pushUrl === fetchUrl ? "Fetch and push URL" : `Push: ${escapeHtml(pushUrl)}`}</small></div>
+      <div class="remote-actions">
+        <button data-remote-action="fetch" data-remote="${escapeHtml(remote.name)}">Fetch</button>
+        <button class="sync-button" data-remote-action="sync" data-remote="${escapeHtml(remote.name)}">Sync</button>
+        <button class="remove-button" data-remote-action="remove" data-remote="${escapeHtml(remote.name)}">Remove</button>
+      </div>
+    </div>`;
+  }).join("");
+}
+
 function updateSelectionLabels() {
   $("#changes-selected").textContent = `${appState.selectedChanges.size} selected`;
 }
@@ -221,6 +249,37 @@ async function prepareAction(operation, parameters = {}) {
       command = make(operation, { branch });
     } else command = make(operation, parameters);
     setPreview(command);
+  } catch (error) {
+    toast("Cannot create command", error.message, "error");
+  }
+}
+
+async function prepareRemoteAction(action, remoteName) {
+  const remote = appState.repository?.remotes.find((item) => item.name === remoteName);
+  if (!remote) {
+    toast("Remote not found", "Refresh the repository and try again.", "error");
+    return;
+  }
+  try {
+    if (action === "fetch") {
+      setPreview(make("remote.fetch-one", { remote: remote.name }));
+      return;
+    }
+    if (action === "sync") {
+      const remoteBranchExists = remote.branches.includes(`${remote.name}/${appState.repository.currentBranch}`);
+      setPreview(syncRemote({ remote: remote.name, branch: appState.repository.currentBranch, remoteBranchExists }));
+      return;
+    }
+    if (action === "remove") {
+      const confirmed = await modal({
+        title: `Remove remote ${remote.name}?`,
+        message: "This removes the local remote configuration and its tracking references. It does not delete the hosted repository.",
+        confirmText: "Create preview",
+        icon: "−",
+      });
+      if (!confirmed) return;
+      setPreview(make("remote.remove", { remote: remote.name }));
+    }
   } catch (error) {
     toast("Cannot create command", error.message, "error");
   }
@@ -279,14 +338,42 @@ async function executePending() {
   const cwd = appState.pendingCwd;
   const shouldOpen = appState.openAfterExecution;
   setBusy(true);
-  const response = await window.gitgod.execute(command.args, cwd);
+  const steps = command.steps || [{ args: command.args, display: command.display }];
+  const results = [];
+  let startError = null;
+  for (const step of steps) {
+    const response = await window.gitgod.execute(step.args, cwd);
+    if (!response.ok) {
+      startError = response.error;
+      break;
+    }
+    results.push({ ...response.result, step });
+    if (!response.result.success) break;
+  }
   setBusy(false);
-  if (!response.ok) {
+  if (startError) {
     if (appState.pending === command) clearPreview();
-    toast("Could not start Git", response.error, "error");
+    toast("Could not start Git", startError, "error");
     return;
   }
-  const result = { ...response.result, command, cwd };
+  const lastResult = results[results.length - 1];
+  const multiStep = steps.length > 1;
+  const outputFor = (result, stream) => {
+    const output = result[stream].trim();
+    if (!multiStep || !output) return output;
+    return `== ${result.step.display} ==\n${output}`;
+  };
+  const result = {
+    args: command.args,
+    exitCode: lastResult.exitCode,
+    stdout: results.map((item) => outputFor(item, "stdout")).filter(Boolean).join("\n\n"),
+    stderr: results.map((item) => outputFor(item, "stderr")).filter(Boolean).join("\n\n"),
+    success: results.length === steps.length && results.every((item) => item.success),
+    startedAt: results[0].startedAt,
+    durationSeconds: results.reduce((total, item) => total + item.durationSeconds, 0),
+    command,
+    cwd,
+  };
   appState.history.unshift(result);
   renderHistory();
   if (appState.pending === command) clearPreview();
@@ -357,6 +444,8 @@ document.addEventListener("click", async (event) => {
     const operation = `branch.${branchButton.dataset.branchAction}`;
     await prepareAction(operation, { branch: branchButton.dataset.branch });
   }
+  const remoteButton = event.target.closest("[data-remote-action]");
+  if (remoteButton) await prepareRemoteAction(remoteButton.dataset.remoteAction, remoteButton.dataset.remote);
   const historyButton = event.target.closest("[data-history-index]");
   if (historyButton) showHistoryItem(Number(historyButton.dataset.historyIndex));
 });
@@ -382,6 +471,26 @@ $("#initialize-repository").addEventListener("click", initializeRepository);
 $("#refresh").addEventListener("click", () => refreshRepository());
 $("#select-all-changes").addEventListener("click", () => selectAll("changes"));
 $("#select-all-staged").addEventListener("click", () => selectAll("staged"));
+$("#show-add-remote").addEventListener("click", () => {
+  if (!appState.repository) {
+    toast("Choose a repository first", "Open a repository before adding a remote.", "error");
+    return;
+  }
+  $("#remote-add-form").classList.remove("hidden");
+  $("#remote-name").focus();
+});
+$("#cancel-add-remote").addEventListener("click", () => $("#remote-add-form").classList.add("hidden"));
+$("#remote-add-form").addEventListener("submit", (event) => {
+  event.preventDefault();
+  try {
+    const command = make("remote.add", { remote: $("#remote-name").value, url: $("#remote-url").value });
+    $("#remote-add-form").reset();
+    $("#remote-add-form").classList.add("hidden");
+    setPreview(command);
+  } catch (error) {
+    toast("Cannot add remote", error.message, "error");
+  }
+});
 $("#clear-preview").addEventListener("click", clearPreview);
 $("#cancel-command").addEventListener("click", clearPreview);
 $("#copy-command").addEventListener("click", async () => {

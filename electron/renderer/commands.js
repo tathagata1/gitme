@@ -13,8 +13,11 @@
     "branch.delete": ["Delete branch", ["branch", "-d", "{branch}"], RISK.CAUTION, "Safely deletes the branch only if Git considers it merged."],
     "branch.merge": ["Merge branch", ["merge", "{branch}"], RISK.CAUTION, "Merges the selected branch into the current branch."],
     "remote.fetch": ["Fetch remote", ["fetch"], RISK.NORMAL, "Downloads remote objects and references without merging."],
+    "remote.fetch-one": ["Fetch remote", ["fetch", "--prune", "{remote}"], RISK.NORMAL, "Downloads the selected remote's objects and refreshes its tracking references."],
     "remote.pull": ["Pull changes", ["pull"], RISK.CAUTION, "Fetches and integrates the configured upstream branch."],
     "remote.push": ["Push commits", ["push"], RISK.NORMAL, "Uploads commits using the branch’s configured upstream."],
+    "remote.add": ["Add remote", ["remote", "add", "{remote}", "{url}"], RISK.NORMAL, "Adds a named remote URL to this repository."],
+    "remote.remove": ["Remove remote", ["remote", "remove", "{remote}"], RISK.CAUTION, "Removes the selected remote and its local remote-tracking references. The hosted repository is not deleted."],
   };
 
   function quote(argument) {
@@ -36,6 +39,37 @@
 
   function command(operation, args, summary, explanation, risk = RISK.NORMAL) {
     return { operation, args, summary, explanation, risk, display: ["git", ...args].map(quote).join(" ") };
+  }
+
+  function sequence(operation, steps, summary, explanation, risk = RISK.NORMAL) {
+    const commands = steps.map((args) => command(operation, args, summary, explanation, risk));
+    return {
+      operation,
+      args: commands[0].args,
+      steps: commands.map(({ args, display }) => ({ args, display })),
+      summary,
+      explanation,
+      risk,
+      display: commands.map(({ display }, index) => `${index + 1}. ${display}`).join("\n"),
+    };
+  }
+
+  function syncRemote({ remote, branch, remoteBranchExists = false }) {
+    const values = { remote: String(remote || "").trim(), branch: String(branch || "").trim() };
+    if (!values.remote) throw new Error("remote is required.");
+    if (!values.branch || values.branch === "Detached HEAD") throw new Error("Switch to a local branch before syncing.");
+    if ([values.remote, values.branch].some((value) => /[\0\r\n]/.test(value))) throw new Error("Remote and branch names must be on one line.");
+    const push = ["push", "-u", values.remote, values.branch];
+    if (!remoteBranchExists) {
+      return command("remote.sync", push, "Publish branch to remote", `Pushes ${values.branch} to ${values.remote} and configures it as the upstream branch.`);
+    }
+    return sequence(
+      "remote.sync",
+      [["fetch", "--prune", values.remote], ["pull", "--rebase", values.remote, values.branch], push],
+      "Sync branch with remote",
+      `Fetches ${values.remote}, rebases local ${values.branch} onto its remote branch, then pushes the synchronized result. Each command runs separately without a shell.`,
+      RISK.CAUTION,
+    );
   }
 
   function paths(operation, selectedPaths, hasHead = true) {
@@ -94,5 +128,5 @@
     return command("raw", args, "Raw Git command", "Runs these arguments directly through Git without invoking a shell.", risk);
   }
 
-  return { RISK, command, make, paths, quote, raw, tokenize };
+  return { RISK, command, make, paths, quote, raw, sequence, syncRemote, tokenize };
 });

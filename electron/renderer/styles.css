@@ -171,6 +171,25 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
 .commit-hash { color: var(--blue); font: 10px ui-monospace, monospace; background: rgba(93,169,255,.08); padding: 3px 6px; border-radius: 6px; }
 .remote-badge { color: var(--blue); background: rgba(93,169,255,.08); border: 1px solid rgba(93,169,255,.15); border-radius: 20px; padding: 3px 8px; font-size: 9px; }
 
+.remotes-panel { grid-column: 1 / -1; min-height: 190px; }
+.remote-add-form { padding: 13px 18px; border-bottom: 1px solid var(--border); display: grid; grid-template-columns: minmax(120px, .35fr) minmax(260px, 1fr) auto auto; gap: 10px; align-items: end; background: rgba(93,169,255,.035); }
+.remote-add-form label span { display: block; color: var(--quiet); font-size: 9px; font-weight: 800; letter-spacing: .08em; margin-bottom: 5px; text-transform: uppercase; }
+.remote-add-form input { width: 100%; height: 40px; padding: 0 11px; color: var(--text); background: #091321; border: 1px solid var(--border-strong); border-radius: 9px; }
+.remote-list { min-height: 116px; max-height: 310px; overflow-y: auto; }
+.remote-row { min-height: 70px; padding: 11px 18px; border-bottom: 1px solid rgba(153,177,211,.075); display: grid; grid-template-columns: minmax(150px,.32fr) minmax(240px,1fr) auto; gap: 18px; align-items: center; }
+.remote-row:last-child { border-bottom: 0; }
+.remote-identity, .remote-url { min-width: 0; }
+.remote-identity strong, .remote-url strong, .remote-url small { display: block; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.remote-identity strong { font-size: 13px; }
+.remote-identity small, .remote-url small { color: var(--quiet); font-size: 9px; margin-top: 2px; }
+.remote-url strong { color: var(--muted); font: 10px ui-monospace, Consolas, monospace; }
+.remote-tracking { display: inline-block; margin-top: 4px; color: var(--blue); background: rgba(93,169,255,.08); border-radius: 5px; padding: 2px 5px; font-size: 8px; }
+.remote-actions { display: flex; gap: 6px; }
+.remote-actions button { height: 31px; padding: 0 10px; border: 1px solid var(--border); background: rgba(255,255,255,.04); color: var(--muted); border-radius: 8px; cursor: pointer; font-size: 10px; }
+.remote-actions button:hover { color: var(--text); background: rgba(255,255,255,.08); }
+.remote-actions .sync-button { color: var(--accent); border-color: rgba(166,242,61,.2); background: rgba(166,242,61,.06); }
+.remote-actions .remove-button:hover { color: var(--danger); border-color: rgba(255,107,120,.25); }
+
 .section-intro { margin: 6px 0 24px; }
 .section-intro h2 { font-size: 28px; letter-spacing: -.04em; margin: 2px 0 4px; }
 .section-intro > p:not(.eyebrow) { color: var(--muted); margin: 0; max-width: 700px; }
@@ -246,4 +265,8 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
   .command-dock { left: 236px; }
   .hero-stats div { padding-inline: 14px; }
   .workspace-grid { grid-template-columns: 1fr 1fr; }
+  .remote-add-form { grid-template-columns: minmax(110px,.35fr) minmax(200px,1fr); }
+  .remote-add-form button { justify-self: start; }
+  .remote-row { grid-template-columns: minmax(130px,.35fr) minmax(200px,1fr); }
+  .remote-actions { grid-column: 1 / -1; }
 }

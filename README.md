@@ -44,9 +44,10 @@ python -m pytest
 
 - Native folder picker for switching between any local Git worktrees
 - Initialize a repository in a selected folder
-- Repository dashboard with current branch, working changes, staged files, local branches, remotes, and recent commits
+- Repository dashboard with current branch, working changes, staged files, local branches, remote URLs/tracking status, and recent commits
 - Multi-select staging and unstaging with safe `--` path separation
-- Commit, create/switch/delete/merge branch, fetch, pull, and push workflows
+- Commit, create/switch/delete/merge branch, fetch, pull, push, and one-click remote sync workflows
+- Add and remove remotes with previewed, shell-free Git commands
 - Drag a branch onto the current branch to propose a merge
 - Always-visible command preview with risk classification before execution
 - Raw Git mode parsed into arguments and executed without a shell

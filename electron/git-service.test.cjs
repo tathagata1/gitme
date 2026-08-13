@@ -16,6 +16,9 @@ test("parseStatus reads branches, ordinary files, renames, and untracked paths",
   const state = parseStatus(input);
   assert.equal(state.currentBranch, "feature/desktop");
   assert.equal(state.detachedHead, false);
+  assert.equal(state.upstream, null);
+  assert.equal(state.ahead, 0);
+  assert.equal(state.behind, 0);
   assert.deepEqual(state.files, [
     { path: "staged file.txt", indexStatus: "M", worktreeStatus: "." },
     { path: "working.txt", indexStatus: ".", worktreeStatus: "M" },
@@ -28,6 +31,13 @@ test("parseStatus labels a detached head", () => {
   const state = parseStatus("# branch.head (detached)\0");
   assert.equal(state.detachedHead, true);
   assert.equal(state.currentBranch, "Detached HEAD");
+});
+
+test("parseStatus reads upstream divergence", () => {
+  const state = parseStatus("# branch.head main\0# branch.upstream origin/main\0# branch.ab +2 -3\0");
+  assert.equal(state.upstream, "origin/main");
+  assert.equal(state.ahead, 2);
+  assert.equal(state.behind, 3);
 });
 
 test("parseLog reads structured commit records", () => {
