@@ -10,6 +10,8 @@ const appState = {
   selectedChanges: new Set(),
   selectedStaged: new Set(),
   busy: false,
+  countdownTimer: null,
+  countdownDeadline: null,
 };
 
 const $ = (selector) => document.querySelector(selector);
@@ -126,7 +128,6 @@ async function refreshRepository({ quiet = false } = {}) {
 function setBusy(busy) {
   appState.busy = busy;
   $("#refresh").classList.toggle("spinning", busy);
-  $("#execute-command").disabled = busy;
 }
 
 function renderRepository() {
@@ -153,7 +154,6 @@ function renderRepository() {
   $("#staged-count").textContent = staged.length;
   $("#branches-count").textContent = repository.branches.length;
   $("#remote-badge").textContent = repository.remotes.length ? `${repository.remotes.length} remote${repository.remotes.length === 1 ? "" : "s"}` : "Local only";
-  $("#header-repository-button").innerHTML = "<span>▣</span> Change folder";
   renderFiles("changes", changed, appState.selectedChanges);
   renderFiles("staged", staged, appState.selectedStaged);
   renderBranches();
@@ -227,6 +227,7 @@ async function prepareAction(operation, parameters = {}) {
 }
 
 function setPreview(command, cwd = appState.root, openAfterExecution = false) {
+  stopExecutionCountdown();
   appState.pending = command;
   appState.pendingCwd = cwd;
   appState.openAfterExecution = openAfterExecution;
@@ -238,9 +239,32 @@ function setPreview(command, cwd = appState.root, openAfterExecution = false) {
   $("#preview-command").textContent = command.display;
   $("#preview-explanation").textContent = command.explanation;
   $("#command-dock").classList.add("open");
+  startExecutionCountdown();
+}
+
+function stopExecutionCountdown() {
+  if (appState.countdownTimer !== null) clearInterval(appState.countdownTimer);
+  appState.countdownTimer = null;
+  appState.countdownDeadline = null;
+}
+
+function startExecutionCountdown() {
+  const duration = 5000;
+  appState.countdownDeadline = Date.now() + duration;
+  const updateCountdown = () => {
+    if (!appState.pending || appState.countdownDeadline === null) return;
+    const remaining = Math.max(0, appState.countdownDeadline - Date.now());
+    const seconds = Math.max(1, Math.ceil(remaining / 1000));
+    $("#countdown-seconds").textContent = seconds;
+    $("#countdown-unit").textContent = seconds === 1 ? "second" : "seconds";
+    if (remaining === 0 && !appState.busy) executePending();
+  };
+  updateCountdown();
+  appState.countdownTimer = setInterval(updateCountdown, 100);
 }
 
 function clearPreview() {
+  stopExecutionCountdown();
   appState.pending = null;
   appState.pendingCwd = null;
   appState.openAfterExecution = false;
@@ -250,29 +274,22 @@ function clearPreview() {
 async function executePending() {
   const command = appState.pending;
   if (!command || appState.busy) return;
-  if (command.risk >= RISK.CAUTION) {
-    const confirmed = await modal({
-      title: command.risk === RISK.DESTRUCTIVE ? "Confirm destructive command" : "Review this command",
-      message: command.risk === RISK.DESTRUCTIVE ? "This operation can permanently discard work. GitGod cannot guarantee recovery." : "This operation can significantly change repository state.",
-      command: command.display,
-      confirmText: "Execute exactly this",
-      icon: "!",
-    });
-    if (!confirmed) return;
-  }
+  stopExecutionCountdown();
+  $("#command-dock").classList.remove("open");
   const cwd = appState.pendingCwd;
   const shouldOpen = appState.openAfterExecution;
   setBusy(true);
   const response = await window.gitgod.execute(command.args, cwd);
   setBusy(false);
   if (!response.ok) {
+    if (appState.pending === command) clearPreview();
     toast("Could not start Git", response.error, "error");
     return;
   }
   const result = { ...response.result, command, cwd };
   appState.history.unshift(result);
   renderHistory();
-  clearPreview();
+  if (appState.pending === command) clearPreview();
   if (result.success) {
     toast("Command completed", command.display);
     if (shouldOpen) {
@@ -360,14 +377,13 @@ document.addEventListener("drop", (event) => {
 });
 $("#choose-repository").addEventListener("click", chooseRepository);
 $("#sidebar-select-folder").addEventListener("click", chooseRepository);
-$("#header-repository-button").addEventListener("click", chooseRepository);
 $("#empty-open").addEventListener("click", chooseRepository);
 $("#initialize-repository").addEventListener("click", initializeRepository);
 $("#refresh").addEventListener("click", () => refreshRepository());
 $("#select-all-changes").addEventListener("click", () => selectAll("changes"));
 $("#select-all-staged").addEventListener("click", () => selectAll("staged"));
 $("#clear-preview").addEventListener("click", clearPreview);
-$("#execute-command").addEventListener("click", executePending);
+$("#cancel-command").addEventListener("click", clearPreview);
 $("#copy-command").addEventListener("click", async () => {
   if (!appState.pending) return;
   await navigator.clipboard.writeText(appState.pending.display);

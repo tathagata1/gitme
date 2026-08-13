@@ -50,7 +50,6 @@
           <div class="topbar-actions">
             <div class="branch-chip" id="branch-chip"><span>⑂</span><strong>No branch</strong></div>
             <button class="icon-button" id="refresh" aria-label="Refresh repository" title="Refresh repository">↻</button>
-            <button class="primary-button" id="header-repository-button"><span>▣</span> Select folder</button>
           </div>
         </header>
 
@@ -102,8 +101,8 @@
         </section>
 
         <section class="view" id="raw-view">
-          <div class="section-intro"><p class="eyebrow">ADVANCED MODE</p><h2>Run a raw Git command</h2><p>The command is split into arguments and passed directly to Git—never to a shell. You still preview and explicitly execute it.</p></div>
-          <div class="panel raw-card"><label for="raw-input">Command</label><div class="raw-input-row"><span>$</span><input id="raw-input" autocomplete="off" spellcheck="false" placeholder="git log --oneline --graph --all" /><button class="primary-button" id="preview-raw">Create preview</button></div><div class="warning-note"><strong>Safety note</strong><span>Destructive patterns such as <code>reset --hard</code>, forced pushes, and <code>clean -f</code> receive an extra confirmation.</span></div></div>
+          <div class="section-intro"><p class="eyebrow">ADVANCED MODE</p><h2>Run a raw Git command</h2><p>The command is split into arguments and passed directly to Git—never to a shell. You can review and cancel it during the five-second preview.</p></div>
+          <div class="panel raw-card"><label for="raw-input">Command</label><div class="raw-input-row"><span>$</span><input id="raw-input" autocomplete="off" spellcheck="false" placeholder="git log --oneline --graph --all" /><button class="primary-button" id="preview-raw">Create preview</button></div><div class="warning-note"><strong>Safety note</strong><span>Review destructive patterns such as <code>reset --hard</code>, forced pushes, and <code>clean -f</code> carefully, and cancel them during the five-second preview if needed.</span></div></div>
         </section>
       </main>
     </div>
@@ -113,7 +112,7 @@
       <div class="dock-header"><div><span class="risk-badge" id="risk-badge">NORMAL</span><strong id="preview-summary">Command preview</strong></div><button class="dock-close" id="clear-preview" aria-label="Clear preview">×</button></div>
       <div class="command-line"><span>$</span><code id="preview-command"></code><button id="copy-command" title="Copy command">Copy</button></div>
       <p id="preview-explanation"></p>
-      <div class="dock-actions"><span>Review the exact command before it touches your repository.</span><button class="primary-button execute-button" id="execute-command">Execute command <span>↵</span></button></div>
+      <div class="dock-actions"><span class="countdown-status">Executing automatically in <strong id="countdown-seconds">5</strong> <span id="countdown-unit">seconds</span>…</span><button class="secondary-button cancel-command" id="cancel-command">Cancel</button></div>
     </section>
 
     <div class="modal-backdrop" id="modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="modal-title">

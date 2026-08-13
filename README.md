@@ -5,7 +5,7 @@ GitGod is a polished, offline Electron desktop client for operating real local G
 Every modifying workflow follows the same path:
 
 ```text
-Visual action → command preview → explicit Execute → Git CLI → raw result → refreshed repository
+Visual action → five-second command preview → automatic Git CLI execution → raw result → refreshed repository
 ```
 
 There is no cloud service, account, database, LLM, or Git hosting API. Git commands are executed as argument arrays without a shell.
@@ -50,7 +50,7 @@ python -m pytest
 - Drag a branch onto the current branch to propose a merge
 - Always-visible command preview with risk classification before execution
 - Raw Git mode parsed into arguments and executed without a shell
-- Extra confirmation for caution and destructive patterns
+- Five-second automatic execution countdown with a cancel action
 - Raw stdout, stderr, exit code, duration, and inspect-only session history
 - Responsive dark desktop UI with keyboard shortcuts (`Ctrl/Cmd+O` to open, `Ctrl/Cmd+R` to refresh, `Esc` to close previews)
 
@@ -69,4 +69,4 @@ The renderer has no direct Node.js access. `contextIsolation`, sandboxing, disab
 
 Git always runs through Node's `execFile("git", args, { shell: false })`. Arguments remain separate from the display string, so spaces and quote characters in paths or commit messages do not become shell syntax. `--` separates file paths from Git options when staging and unstaging.
 
-Raw mode is intentionally advanced. Its destructive-pattern detection is conservative and cannot identify every risky combination or alias, so the exact command remains visible and still requires an explicit Execute step.
+Raw mode is intentionally advanced. Its destructive-pattern detection is conservative and cannot identify every risky combination or alias, so review the exact command and use the five-second cancellation window when needed.
