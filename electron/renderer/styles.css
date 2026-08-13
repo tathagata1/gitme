@@ -106,7 +106,8 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
 .empty-state > p { color: var(--muted); font-size: 14px; margin: 0 0 24px; }
 
 .dashboard { max-width: 1440px; margin: 0 auto; }
-.workspace-grid { display: grid; grid-template-columns: minmax(300px, .88fr) minmax(360px, 1.12fr); grid-template-rows: 330px minmax(300px, 1fr); gap: 16px; }
+.workspace-grid { display: grid; grid-template-columns: minmax(300px, .88fr) minmax(360px, 1.12fr); grid-auto-rows: auto; align-items: start; gap: 16px; }
+.workspace-grid > .panel { width: 100%; max-height: 400px; align-self: start; }
 .panel { border: 1px solid var(--border); background: var(--panel); border-radius: var(--radius); box-shadow: 0 12px 35px rgba(0,0,0,.12); backdrop-filter: blur(16px); overflow: hidden; }
 .panel-header { min-height: 62px; padding: 13px 18px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
 .panel h3 { margin: 0; font-size: 15px; letter-spacing: -.02em; }
@@ -114,7 +115,7 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
 .count.green { background: rgba(var(--success-rgb),.1); color: var(--success); }
 .text-button { border: 0; background: none; color: var(--muted); cursor: pointer; font-size: 11px; padding: 5px; }
 .text-button:hover { color: var(--text); }
-.file-list { height: 213px; overflow-y: auto; scrollbar-color: #2b3341 transparent; }
+.file-list { max-height: 280px; overflow-y: auto; scrollbar-color: #2b3341 transparent; }
 .file-row { min-height: 51px; padding: 8px 18px; border-bottom: 1px solid var(--border); display: grid; grid-template-columns: 22px 31px minmax(0,1fr) auto; gap: 10px; align-items: center; transition: .12s ease; cursor: pointer; }
 .file-row:hover { background: rgba(255,255,255,.025); }
 .file-row input { appearance: none; width: 15px; height: 15px; border: 1px solid var(--border-strong); border-radius: 4px; display: grid; place-items: center; }
@@ -134,7 +135,7 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
 .list-empty { height: 100%; display: grid; place-items: center; text-align: center; color: var(--quiet); padding: 25px; }
 .list-empty strong { display: block; color: var(--muted); }
 
-.branch-list, .commit-list { height: calc(100% - 63px); overflow-y: auto; }
+.branch-list, .commit-list { max-height: 300px; overflow-y: auto; }
 .branch-row { min-height: 51px; padding: 8px 15px 8px 19px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 10px; }
 .branch-line { width: 10px; height: 10px; border: 2px solid var(--quiet); border-radius: 50%; position: relative; }
 .branch-row.current .branch-line { background: var(--accent); border-color: var(--accent); box-shadow: 0 0 8px rgba(var(--accent-rgb),.4); }
@@ -154,11 +155,13 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
 .commit-hash { color: var(--blue); font: 10px ui-monospace, monospace; background: rgba(var(--blue-rgb),.08); padding: 3px 6px; border-radius: 6px; }
 .remote-badge { color: var(--blue); background: rgba(var(--blue-rgb),.08); border: 1px solid rgba(var(--blue-rgb),.15); border-radius: 20px; padding: 3px 8px; font-size: 9px; }
 
-.remotes-panel { grid-column: 1 / -1; min-height: 190px; }
+.remotes-panel { display: flex; flex-direction: column; min-height: 0; }
+.activity-panel { grid-column: 1 / -1; }
+.remotes-panel .panel-header, .remote-add-form { flex-shrink: 0; }
 .remote-add-form { padding: 13px 18px; border-bottom: 1px solid var(--border); display: grid; grid-template-columns: minmax(120px, .35fr) minmax(260px, 1fr) auto auto; gap: 10px; align-items: end; background: rgba(var(--blue-rgb),.035); }
 .remote-add-form label span { display: block; color: var(--quiet); font-size: 9px; font-weight: 800; letter-spacing: .08em; margin-bottom: 5px; text-transform: uppercase; }
 .remote-add-form input { width: 100%; height: 40px; padding: 0 11px; color: var(--text); background: var(--input); border: 1px solid var(--border-strong); border-radius: 9px; }
-.remote-list { min-height: 116px; max-height: 310px; overflow-y: auto; }
+.remote-list { flex: 1 1 auto; min-height: 0; max-height: 300px; overflow-y: auto; }
 .remote-row { min-height: 70px; padding: 11px 18px; border-bottom: 1px solid var(--border); display: grid; grid-template-columns: minmax(150px,.32fr) minmax(240px,1fr) auto; gap: 18px; align-items: center; }
 .remote-row:last-child { border-bottom: 0; }
 .remote-identity, .remote-url { min-width: 0; }
