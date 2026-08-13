@@ -70,7 +70,7 @@ function closeModal(confirmed) {
 function switchView(name) {
   $$(".nav-item").forEach((item) => item.classList.toggle("active", item.dataset.view === name));
   $$(".view").forEach((view) => view.classList.toggle("active", view.id === `${name}-view`));
-  const labels = { workspace: ["REPOSITORY OVERVIEW", "Workspace"], history: ["SESSION LOG", "Command history"], raw: ["ADVANCED MODE", "Raw command"] };
+  const labels = { workspace: ["REPOSITORY OVERVIEW", "Workspace"], history: ["SESSION LOG", "Command history"], raw: ["ADVANCED MODE", "Custom command"] };
   $("#page-eyebrow").textContent = labels[name][0];
   $("#page-title").textContent = labels[name][1];
 }
@@ -495,7 +495,7 @@ $("#copy-command").addEventListener("click", async () => {
 });
 $("#preview-raw").addEventListener("click", () => {
   try { setPreview(raw($("#raw-input").value)); }
-  catch (error) { toast("Invalid raw command", error.message, "error"); }
+  catch (error) { toast("Invalid custom command", error.message, "error"); }
 });
 $("#raw-input").addEventListener("keydown", (event) => {
   if (event.key === "Enter") $("#preview-raw").click();

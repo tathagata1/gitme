@@ -27,7 +27,7 @@
         <nav class="nav-list" aria-label="Primary navigation">
           <button class="nav-item active" data-view="workspace"><span>⌂</span>Workspace</button>
           <button class="nav-item" data-view="history"><span>↺</span>Command history <b id="history-count">0</b></button>
-          <button class="nav-item" data-view="raw"><span>›_</span>Raw command</button>
+          <button class="nav-item" data-view="raw"><span>›_</span>Custom command</button>
         </nav>
 
         <div class="sidebar-actions">
@@ -107,7 +107,7 @@
         </section>
 
         <section class="view" id="raw-view">
-          <div class="section-intro"><p class="eyebrow">ADVANCED MODE</p><h2>Run a raw Git command</h2><p>The command is split into arguments and passed directly to Git—never to a shell. You can review and cancel it during the five-second preview.</p></div>
+          <div class="section-intro"><p class="eyebrow">ADVANCED MODE</p></div>
           <div class="panel raw-card"><label for="raw-input">Command</label><div class="raw-input-row"><span>$</span><input id="raw-input" autocomplete="off" spellcheck="false" placeholder="git log --oneline --graph --all" /><button class="primary-button" id="preview-raw">Create preview</button></div><div class="warning-note"><strong>Safety note</strong><span>Review destructive patterns such as <code>reset --hard</code>, forced pushes, and <code>clean -f</code> carefully, and cancel them during the five-second preview if needed.</span></div></div>
         </section>
       </main>

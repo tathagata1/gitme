@@ -105,14 +105,14 @@
         }
       } else token += character;
     }
-    if (escaping || quoteMode) throw new Error("The raw command contains an unfinished quote or escape.");
+    if (escaping || quoteMode) throw new Error("The custom command contains an unfinished quote or escape.");
     if (token) tokens.push(token);
     return tokens;
   }
 
   function raw(input) {
     const tokens = tokenize(input);
-    if (!tokens.length || !["git", "git.exe"].includes(tokens[0].toLowerCase())) throw new Error("Raw commands must begin with ‘git’. ");
+    if (!tokens.length || !["git", "git.exe"].includes(tokens[0].toLowerCase())) throw new Error("Custom commands must begin with ‘git’. ");
     if (tokens.length === 1) throw new Error("Enter a Git subcommand after ‘git’. ");
     const args = tokens.slice(1);
     const lower = args.map((part) => part.toLowerCase());

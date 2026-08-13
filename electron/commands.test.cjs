@@ -13,7 +13,7 @@ test("file commands use the option separator", () => {
   assert.deepEqual(paths("changes.unstage", ["-danger.txt"], false).args, ["rm", "--cached", "--", "-danger.txt"]);
 });
 
-test("raw commands tokenize quotes without invoking a shell", () => {
+test("custom commands tokenize quotes without invoking a shell", () => {
   assert.deepEqual(tokenize('git commit -m "hello world"'), ["git", "commit", "-m", "hello world"]);
   assert.equal(raw("git status --short").risk, RISK.READ_ONLY);
   assert.equal(raw("git reset --hard HEAD~1").risk, RISK.DESTRUCTIVE);

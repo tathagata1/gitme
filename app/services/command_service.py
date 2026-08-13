@@ -63,7 +63,7 @@ class CommandService:
         except ValueError as error:
             raise CommandValidationError(f"Could not parse the command: {error}") from error
         if not argv or argv[0].lower() not in ("git", "git.exe"):
-            raise CommandValidationError("Raw commands must begin with 'git'.")
+            raise CommandValidationError("Custom commands must begin with 'git'.")
         if len(argv) == 1:
             raise CommandValidationError("Enter a Git subcommand after 'git'.")
         args = tuple(argv[1:])
