@@ -144,12 +144,7 @@ function renderRepository() {
   $("#dashboard").classList.remove("hidden");
   $("#repo-name").textContent = name;
   $("#repo-path").textContent = repository.root;
-  $("#hero-title").textContent = name;
-  $("#hero-path").textContent = repository.root;
   $("#branch-chip strong").textContent = repository.currentBranch;
-  $("#stat-changes").textContent = changed.length;
-  $("#stat-staged").textContent = staged.length;
-  $("#stat-commits").textContent = repository.commits.length;
   $("#changes-count").textContent = changed.length;
   $("#staged-count").textContent = staged.length;
   $("#branches-count").textContent = repository.branches.length;
