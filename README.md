@@ -61,7 +61,7 @@ python -m pytest
 - `electron/git-service.cjs`: shell-free Git execution, repository discovery, and state loading
 - `electron/renderer`: HTML/CSS workspace and command composition
 - `electron/*.test.cjs`: Node unit tests for porcelain/log parsing and command safety
-- `app`, `tests`: retained Python domain implementation and tests; no longer the desktop entry point
+- `app`, `tests`: UI-independent Python Git domain implementation and regression tests
 
 The renderer has no direct Node.js access. `contextIsolation`, sandboxing, disabled Node integration, and a restrictive Content Security Policy keep filesystem and process access in the Electron main process.
 
