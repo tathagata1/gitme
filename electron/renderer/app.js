@@ -70,9 +70,8 @@ function closeModal(confirmed) {
 function switchView(name) {
   $$(".nav-item").forEach((item) => item.classList.toggle("active", item.dataset.view === name));
   $$(".view").forEach((view) => view.classList.toggle("active", view.id === `${name}-view`));
-  const labels = { workspace: ["REPOSITORY OVERVIEW", "Workspace"], history: ["SESSION LOG", "Command history"], raw: ["ADVANCED MODE", "Custom command"] };
-  $("#page-eyebrow").textContent = labels[name][0];
-  $("#page-title").textContent = labels[name][1];
+  const labels = { workspace: "Workspace", history: "History", raw: "Command" };
+  $("#page-title").textContent = labels[name];
 }
 
 async function chooseRepository() {
@@ -162,7 +161,7 @@ function renderFiles(kind, files, selected) {
   const container = $(`#${kind}-list`);
   const isStaged = kind === "staged";
   if (!files.length) {
-    container.innerHTML = `<div class="list-empty"><div><strong>${isStaged ? "Nothing staged yet" : "Working tree is clean"}</strong>${isStaged ? "Select changed files and stage them." : "You’re completely in sync."}</div></div>`;
+    container.innerHTML = `<div class="list-empty"><strong>${isStaged ? "Nothing staged" : "No changes"}</strong></div>`;
     return;
   }
   container.innerHTML = files.map((file) => {
@@ -176,7 +175,7 @@ function renderBranches() {
   const repository = appState.repository;
   const container = $("#branch-list");
   if (!repository.branches.length) {
-    container.innerHTML = '<div class="list-empty"><div><strong>No branches yet</strong>Your first commit will create one.</div></div>';
+    container.innerHTML = '<div class="list-empty"><strong>No branches</strong></div>';
     return;
   }
   container.innerHTML = repository.branches.map((branch) => {
@@ -189,7 +188,7 @@ function renderCommits() {
   const commits = appState.repository.commits;
   const container = $("#commit-list");
   if (!commits.length) {
-    container.innerHTML = '<div class="list-empty"><div><strong>No commits yet</strong>Stage files and create the first commit.</div></div>';
+    container.innerHTML = '<div class="list-empty"><strong>No commits</strong></div>';
     return;
   }
   container.innerHTML = commits.map((commit) => `<div class="commit-row"><span class="commit-node"></span><span class="commit-copy"><strong>${escapeHtml(commit.subject)}</strong><small>${escapeHtml(commit.author)} · ${escapeHtml(commit.relativeDate)}${commit.decorations ? ` · ${escapeHtml(commit.decorations)}` : ""}</small></span><code class="commit-hash">${escapeHtml(commit.hash)}</code></div>`).join("");
@@ -199,7 +198,7 @@ function renderRemotes() {
   const repository = appState.repository;
   const container = $("#remote-list");
   if (!repository.remotes.length) {
-    container.innerHTML = '<div class="list-empty"><div><strong>No remotes configured</strong>Add a hosted repository URL to publish or sync this branch.</div></div>';
+    container.innerHTML = '<div class="list-empty"><strong>No remotes</strong></div>';
     return;
   }
   container.innerHTML = repository.remotes.map((remote) => {
@@ -235,11 +234,11 @@ async function prepareAction(operation, parameters = {}) {
     if (operation === "changes.stage") command = paths(operation, [...appState.selectedChanges]);
     else if (operation === "changes.unstage") command = paths(operation, [...appState.selectedStaged], appState.repository.commits.length > 0);
     else if (operation === "changes.commit") {
-      const message = await modal({ title: "Commit staged changes", message: "Write a concise message describing this snapshot.", fieldLabel: "Commit message", confirmText: "Create preview", icon: "✓" });
+      const message = await modal({ title: "Commit changes", message: "", fieldLabel: "Message", confirmText: "Preview", icon: "✓" });
       if (message === null) return;
       command = make(operation, { message });
     } else if (operation === "branch.create") {
-      const branch = await modal({ title: "Create a new branch", message: `The new branch starts from ${appState.repository.currentBranch}.`, fieldLabel: "Branch name", confirmText: "Create preview", icon: "⑂" });
+      const branch = await modal({ title: "New branch", message: `From ${appState.repository.currentBranch}`, fieldLabel: "Name", confirmText: "Preview", icon: "⑂" });
       if (branch === null) return;
       command = make(operation, { branch });
     } else command = make(operation, parameters);
@@ -268,8 +267,8 @@ async function prepareRemoteAction(action, remoteName) {
     if (action === "remove") {
       const confirmed = await modal({
         title: `Remove remote ${remote.name}?`,
-        message: "This removes the local remote configuration and its tracking references. It does not delete the hosted repository.",
-        confirmText: "Create preview",
+        message: "Removes local configuration only.",
+        confirmText: "Preview",
         icon: "−",
       });
       if (!confirmed) return;
@@ -310,7 +309,6 @@ function startExecutionCountdown() {
     const remaining = Math.max(0, appState.countdownDeadline - Date.now());
     const seconds = Math.max(1, Math.ceil(remaining / 1000));
     $("#countdown-seconds").textContent = seconds;
-    $("#countdown-unit").textContent = seconds === 1 ? "second" : "seconds";
     if (remaining === 0 && !appState.busy) executePending();
   };
   updateCountdown();
@@ -373,20 +371,20 @@ async function executePending() {
   renderHistory();
   if (appState.pending === command) clearPreview();
   if (result.success) {
-    toast("Command completed", command.display);
+    toast("Command complete");
     if (shouldOpen) {
       const opened = await window.gitgod.openPath(cwd);
       if (opened.ok) await openRepository(opened.root);
     } else await refreshRepository({ quiet: true });
-  } else toast(`Git exited with code ${result.exitCode}`, result.stderr.trim() || "Open Command history for the full output.", "error");
+  } else toast(`Git exited with code ${result.exitCode}`, result.stderr.trim() || "See History for output.", "error");
   await showResult(result);
 }
 
 async function showResult(result) {
   const output = [result.stdout.trim(), result.stderr.trim()].filter(Boolean).join("\n\n") || "(No output)";
   await modal({
-    title: result.success ? "Command completed" : `Git exited with code ${result.exitCode}`,
-    message: `${result.command.display}\n\n${output.slice(0, 1400)}${output.length > 1400 ? "\n\n…Full output is available in Command history." : ""}`,
+    title: result.success ? "Complete" : `Git exited with code ${result.exitCode}`,
+    message: `${result.command.display}\n\n${output.slice(0, 1400)}${output.length > 1400 ? "\n\n…See History for full output." : ""}`,
     confirmText: "Done",
     icon: result.success ? "✓" : "!",
     cancelable: false,
@@ -397,7 +395,7 @@ function renderHistory() {
   $("#history-count").textContent = appState.history.length;
   const list = $("#history-list");
   if (!appState.history.length) {
-    list.innerHTML = '<div class="blank-slate">Commands you execute will appear here.</div>';
+    list.innerHTML = '<div class="blank-slate">No commands yet</div>';
     return;
   }
   list.innerHTML = appState.history.map((result, index) => `<button class="history-item" data-history-index="${index}"><strong><span class="${result.success ? "success" : "failure"}">${result.success ? "✓" : "×"}</span> ${escapeHtml(result.command.display)}</strong><small>${escapeHtml(new Date(result.startedAt).toLocaleTimeString())} · ${result.durationSeconds.toFixed(2)}s · exit ${result.exitCode}</small></button>`).join("");
@@ -407,7 +405,7 @@ function showHistoryItem(index) {
   const result = appState.history[index];
   if (!result) return;
   $$(".history-item").forEach((item) => item.classList.toggle("active", Number(item.dataset.historyIndex) === index));
-  $("#history-detail").innerHTML = `<h3 class="${result.success ? "success" : "failure"}">${result.success ? "Command succeeded" : "Command failed"}</h3><p>${escapeHtml(result.command.explanation)}</p><pre>${escapeHtml(result.command.display)}</pre><p class="eyebrow">OUTPUT</p><pre class="output-block">${escapeHtml([result.stdout, result.stderr].filter(Boolean).join("\n") || "(No output)")}</pre><p>Exit code ${result.exitCode} · ${result.durationSeconds.toFixed(2)} seconds · ${escapeHtml(result.cwd)}</p>`;
+  $("#history-detail").innerHTML = `<h3 class="${result.success ? "success" : "failure"}">${result.success ? "Succeeded" : "Failed"}</h3><pre>${escapeHtml(result.command.display)}</pre><pre class="output-block">${escapeHtml([result.stdout, result.stderr].filter(Boolean).join("\n") || "(No output)")}</pre><p class="history-meta">Exit ${result.exitCode} · ${result.durationSeconds.toFixed(2)}s</p>`;
 }
 
 function handleCheckbox(event) {
@@ -460,7 +458,6 @@ document.addEventListener("drop", (event) => {
   if (branch) prepareAction("branch.merge", { branch });
 });
 $("#choose-repository").addEventListener("click", chooseRepository);
-$("#sidebar-select-folder").addEventListener("click", chooseRepository);
 $("#empty-open").addEventListener("click", chooseRepository);
 $("#initialize-repository").addEventListener("click", initializeRepository);
 $("#refresh").addEventListener("click", () => refreshRepository());

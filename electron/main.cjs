@@ -10,7 +10,7 @@ function createWindow() {
     height: 940,
     minWidth: 1040,
     minHeight: 700,
-    backgroundColor: "#08111f",
+    backgroundColor: "#0d1016",
     title: "GitGod",
     show: false,
     autoHideMenuBar: true,
