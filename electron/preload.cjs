@@ -1,6 +1,6 @@
 const { contextBridge, ipcRenderer } = require("electron");
 
-contextBridge.exposeInMainWorld("gitgod", {
+contextBridge.exposeInMainWorld("gitme", {
   chooseRepository: (currentPath) => ipcRenderer.invoke("repository:choose", currentPath),
   chooseInitFolder: () => ipcRenderer.invoke("repository:choose-init"),
   openPath: (selectedPath) => ipcRenderer.invoke("repository:open-path", selectedPath),

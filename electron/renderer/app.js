@@ -76,7 +76,7 @@ function switchView(name) {
 
 async function chooseRepository() {
   if (appState.busy) return;
-  const response = await window.gitgod.chooseRepository(appState.root);
+  const response = await window.gitme.chooseRepository(appState.root);
   if (response.canceled) return;
   if (!response.ok) {
     await modal({ title: "That folder is not a repository", message: response.error, confirmText: "Choose another", icon: "!", cancelable: false });
@@ -86,14 +86,14 @@ async function chooseRepository() {
 }
 
 async function initializeRepository() {
-  const response = await window.gitgod.chooseInitFolder();
+  const response = await window.gitme.chooseInitFolder();
   if (!response.ok) return;
   setPreview(make("repo.init"), response.path, true);
 }
 
 async function openRepository(root, { quiet = false } = {}) {
   setBusy(true);
-  const response = await window.gitgod.loadRepository(root);
+  const response = await window.gitme.loadRepository(root);
   setBusy(false);
   if (!response.ok) {
     if (!quiet) await modal({ title: "Could not open repository", message: response.error, confirmText: "Close", icon: "!", cancelable: false });
@@ -103,7 +103,7 @@ async function openRepository(root, { quiet = false } = {}) {
   appState.repository = response.state;
   appState.selectedChanges.clear();
   appState.selectedStaged.clear();
-  localStorage.setItem("gitgod:lastRepository", response.state.root);
+  localStorage.setItem("gitme:lastRepository", response.state.root);
   renderRepository();
   switchView("workspace");
   if (!quiet) toast("Repository opened", response.state.root);
@@ -113,7 +113,7 @@ async function openRepository(root, { quiet = false } = {}) {
 async function refreshRepository({ quiet = false } = {}) {
   if (!appState.root || appState.busy) return;
   setBusy(true);
-  const response = await window.gitgod.loadRepository(appState.root);
+  const response = await window.gitme.loadRepository(appState.root);
   setBusy(false);
   if (!response.ok) {
     toast("Refresh failed", response.error, "error");
@@ -335,7 +335,7 @@ async function executePending() {
   const results = [];
   let startError = null;
   for (const step of steps) {
-    const response = await window.gitgod.execute(step.args, cwd);
+    const response = await window.gitme.execute(step.args, cwd);
     if (!response.ok) {
       startError = response.error;
       break;
@@ -373,7 +373,7 @@ async function executePending() {
   if (result.success) {
     toast("Command complete");
     if (shouldOpen) {
-      const opened = await window.gitgod.openPath(cwd);
+      const opened = await window.gitme.openPath(cwd);
       if (opened.ok) await openRepository(opened.root);
     } else await refreshRepository({ quiet: true });
   } else toast(`Git exited with code ${result.exitCode}`, result.stderr.trim() || "See History for output.", "error");
@@ -446,7 +446,7 @@ document.addEventListener("click", async (event) => {
 document.addEventListener("change", handleCheckbox);
 document.addEventListener("dragstart", (event) => {
   const branch = event.target.closest(".branch-row:not(.current)");
-  if (branch) event.dataTransfer.setData("text/x-gitgod-branch", branch.dataset.branch);
+  if (branch) event.dataTransfer.setData("text/x-gitme-branch", branch.dataset.branch);
 });
 document.addEventListener("dragover", (event) => {
   if (event.target.closest(".branch-row.current")) event.preventDefault();
@@ -454,7 +454,7 @@ document.addEventListener("dragover", (event) => {
 document.addEventListener("drop", (event) => {
   if (!event.target.closest(".branch-row.current")) return;
   event.preventDefault();
-  const branch = event.dataTransfer.getData("text/x-gitgod-branch");
+  const branch = event.dataTransfer.getData("text/x-gitme-branch");
   if (branch) prepareAction("branch.merge", { branch });
 });
 $("#choose-repository").addEventListener("click", chooseRepository);
@@ -510,5 +510,5 @@ document.addEventListener("keydown", (event) => {
 });
 
 renderHistory();
-const lastRepository = localStorage.getItem("gitgod:lastRepository");
+const lastRepository = localStorage.getItem("gitme:lastRepository");
 if (lastRepository) openRepository(lastRepository, { quiet: true });

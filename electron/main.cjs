@@ -11,7 +11,7 @@ function createWindow() {
     minWidth: 1040,
     minHeight: 700,
     backgroundColor: "#0d1016",
-    title: "GitGod",
+    title: "GitMe",
     show: false,
     autoHideMenuBar: true,
     webPreferences: {

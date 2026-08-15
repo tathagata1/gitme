@@ -1,16 +1,39 @@
 {
-  "name": "gitgod",
+  "name": "gitme",
   "version": "1.0.0",
   "description": "A visual, offline Git desktop client that teaches the command line as you work.",
+  "license": "GPL-3.0-only",
   "main": "electron/main.cjs",
   "type": "commonjs",
   "scripts": {
     "start": "electron .",
     "dev": "electron .",
+    "pack:win": "electron-builder --win --x64 --dir",
+    "dist:win": "electron-builder --win --x64",
     "test": "node --test electron/*.test.cjs",
     "test:python": "python -m pytest"
   },
+  "build": {
+    "appId": "com.gitme.desktop",
+    "productName": "GitMe",
+    "asar": true,
+    "files": [
+      "electron/**/*",
+      "package.json"
+    ],
+    "win": {
+      "target": "nsis",
+      "artifactName": "${productName}-Setup-${version}-${arch}.${ext}"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true
+    }
+  },
   "devDependencies": {
-    "electron": "^43.4.0"
+    "electron": "^43.4.0",
+    "electron-builder": "^26.15.3"
   }
 }
